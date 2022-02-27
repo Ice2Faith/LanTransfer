@@ -23,6 +23,10 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 import i2f.net.core.NetTransfer;
 import i2f.net.core.NetTransferResponse;
@@ -63,9 +67,12 @@ public class NetworkBackgroundService extends Service {
     public static int serverPort=MainActivity.SERVER_PORT;
     public static String connectIp;
     public static int connectPort=MainActivity.SERVER_PORT;
+    private static ReentrantLock lock=new ReentrantLock();
 
     static {
-        pool= Executors.newFixedThreadPool(3);
+        pool= new ThreadPoolExecutor(5,512,
+                0L, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<Runnable>());
         Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
             @Override
             public void run() {
@@ -335,6 +342,7 @@ public class NetworkBackgroundService extends Service {
             @Override
             public void run() {
                 try{
+                    lock.lock();
                     if(client==null){
                         MainActivity.callbackSystemError(getApplicationContext(),"target server not connect!");
                     }else{
@@ -344,6 +352,8 @@ public class NetworkBackgroundService extends Service {
                     }
                 }catch (Exception e){
                     MainActivity.callbackSystemError(getApplicationContext(),"send msg error:"+e.getMessage()+" of "+e.getClass().getName());
+                }finally {
+                    lock.unlock();
                 }
             }
         });
@@ -354,6 +364,7 @@ public class NetworkBackgroundService extends Service {
             @Override
             public void run() {
                 try{
+                    lock.lock();
                     if(client==null){
                         MainActivity.callbackSystemError(getApplicationContext(),"target server not connect!");
                     }else{
@@ -364,6 +375,8 @@ public class NetworkBackgroundService extends Service {
                     }
                 }catch (Exception e){
                     MainActivity.callbackSystemError(getApplicationContext(),"send file error:"+e.getMessage()+" of "+e.getClass().getName());
+                }finally {
+                    lock.unlock();
                 }
             }
         });

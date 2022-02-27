@@ -4,6 +4,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
+import android.content.ClipData;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
@@ -36,6 +37,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -541,6 +543,8 @@ public class MainActivity extends Activity {
         }else if (Intent.ACTION_SEND_MULTIPLE.equals(action)&&type!=null){
             if (type.startsWith("image/")){
                 dealMultiplePicStream(intent);
+            }else{
+                dealMultiplePicStream(intent);
             }
         }
     }
@@ -672,6 +676,7 @@ public class MainActivity extends Activity {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("*/*");
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         this.startActivityForResult(intent, REQ_CODE_CHOICE_FILE);
     }
 
@@ -718,15 +723,34 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode==REQ_CODE_CHOICE_FILE && resultCode == Activity.RESULT_OK) {
-            Uri uri = data.getData();
-            String path=getFilePathFormUri(uri);
-            if(path!=null){
-                File file=new File(path);
-                sendFile(file);
-                Toast.makeText(this,"choice file:"+file.getAbsolutePath(),Toast.LENGTH_LONG).show();
+            if(data.getData()!=null){ // 单选
+                Uri uri = data.getData();
+                String path=getFilePathFormUri(uri);
+                if(path!=null){
+                    File file=new File(path);
+                    sendFile(file);
+                    Toast.makeText(this,"choice file:"+file.getAbsolutePath(),Toast.LENGTH_LONG).show();
+                }else{
+                    Toast.makeText(this,"no file choice.",Toast.LENGTH_LONG).show();
+                }
+            }else if(data.getClipData()!=null){ // 多选
+                ClipData clipData = data.getClipData();
+                if (clipData != null) {
+                    for (int i = 0; i < clipData.getItemCount(); i++) {
+                        ClipData.Item item = clipData.getItemAt(i);
+                        Uri uri = item.getUri();
+                        String path=getFilePathFormUri(uri);
+                        if(path!=null){
+                            File file=new File(path);
+                            sendFile(file);
+                            Toast.makeText(this,"choice file:"+file.getAbsolutePath(),Toast.LENGTH_LONG).show();
+                        }
+                    }
+                }
             }else{
                 Toast.makeText(this,"no file choice.",Toast.LENGTH_LONG).show();
             }
+
         }
     }
 
