@@ -26,6 +26,15 @@ public class NetTransferHead implements Serializable {
     private long contentLength;
     private String name;
     private String charset;
+    private int seed;
+
+    public int getSeed() {
+        return seed;
+    }
+
+    public void setSeed(int seed) {
+        this.seed = seed;
+    }
 
     public String getDate() {
         return date;

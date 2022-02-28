@@ -1,5 +1,9 @@
 # LanTransfer
 a transfer for lan or inernet
+# version or platform?
+- AndroidApk dir is android apk project root
+- JavaSwingForm dir is java swing form application for windows
+- release dir include runable jar/apk , you can install and enjoy it
 # what's it?
 - a message sender/receiver
 - a file transfer
