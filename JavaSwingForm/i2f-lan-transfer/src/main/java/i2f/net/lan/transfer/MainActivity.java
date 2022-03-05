@@ -1,12 +1,15 @@
 package i2f.net.lan.transfer;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
+import java.util.List;
 import java.util.*;
 
 /**
@@ -44,6 +47,12 @@ public class MainActivity extends JFrame {
     private JCheckBox ckbAutoClean;
     private JButton btnSendMessage;
 
+    private JButton btnApplyAddress;
+    private JCheckBox ckbSendParentDir;
+
+    private JTextField edtFileSaveDir;
+    private JButton btnApplyFileSaveDir;
+
     private NetworkBackgroundService svc;
 
 
@@ -58,6 +67,7 @@ public class MainActivity extends JFrame {
         NetworkBackgroundService.serverStatus(svc);
         NetworkBackgroundService.clientStatus(svc);
         NetworkBackgroundService.scanLanAddressCache(svc);
+        edtFileSaveDir.setText(NetworkBackgroundService.saveFilePath);
     }
 
     protected int perWid(Container parent,double per){
@@ -121,6 +131,11 @@ public class MainActivity extends JFrame {
     protected void initComponents(){
         setSize(1080,720);
         setTitle("LanTransfer");
+        ClassLoader loader=Thread.currentThread().getContextClassLoader();
+        ImageIcon imageIcon = new ImageIcon(loader.getResource("icon.png"));
+        // 设置标题栏的图标为face.gif
+        this.setIconImage(imageIcon.getImage());
+
         setDefaultLookAndFeelDecorated(true);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         getContentPane().setLayout(new GridLayout(3,1));
@@ -134,19 +149,19 @@ public class MainActivity extends JFrame {
         topArea.add(panel1);
 
         edtServerPort=new JTextField();
-        edtServerPort.setBackground(Color.decode("#00ff00"));
+        edtServerPort.setBackground(Color.decode("#fff8e1"));
         panel1.add(edtServerPort);
 
         ckbRunServer =new JCheckBox("启用主机");
-        ckbRunServer.setBackground(Color.decode("#00ff00"));
+        ckbRunServer.setBackground(Color.decode("#ffecb3"));
         panel1.add(ckbRunServer);
 
         btnScanLan=new JButton("扫描");
-        btnScanLan.setBackground(Color.decode("#ff8800"));
+        btnScanLan.setBackground(Color.decode("#ffcc80"));
         panel1.add(btnScanLan);
 
         JPanel panel2=new JPanel();
-        panel2.setLayout(new GridLayout(0,2));
+        panel2.setLayout(new GridLayout(0,3));
         topArea.add(panel2);
 
         spnLocalAddressModel=new DefaultComboBoxModel();
@@ -157,21 +172,37 @@ public class MainActivity extends JFrame {
         spnLanAddress=new JComboBox(spnLanAddressModel);
         panel2.add(spnLanAddress);
 
+        btnApplyAddress=new JButton("应用");
+        btnApplyAddress.setBackground(Color.decode("#fff9c4"));
+        panel2.add(btnApplyAddress);
+
         JPanel panel3=new JPanel();
         panel3.setLayout(new GridLayout(0,3));
         topArea.add(panel3);
 
         ckbConnect=new JCheckBox("连接");
-        ckbConnect.setBackground(Color.decode("#0088ff"));
+        ckbConnect.setBackground(Color.decode("#b2ebf2"));
         panel3.add(ckbConnect);
 
         edtConnectIp=new JTextField();
-        edtConnectIp.setBackground(Color.decode("#0088ff"));
+        edtConnectIp.setBackground(Color.decode("#e0f7fa"));
         panel3.add(edtConnectIp);
 
         edtConnectPort=new JTextField();
-        edtConnectPort.setBackground(Color.decode("#0088ff"));
+        edtConnectPort.setBackground(Color.decode("#e0f7fa"));
         panel3.add(edtConnectPort);
+
+        JPanel panel4=new JPanel();
+        panel4.setLayout(new GridLayout(0,2));
+        topArea.add(panel4);
+
+        edtFileSaveDir = new JTextField();
+        edtFileSaveDir.setBackground(Color.decode("#e8f5e9"));
+        panel4.add(edtFileSaveDir);
+
+        btnApplyFileSaveDir=new JButton("应用路径");
+        btnApplyFileSaveDir.setBackground(Color.decode("#c8e6c9"));
+        panel4.add(btnApplyFileSaveDir);
 
         JPanel centerArea=new JPanel();
         centerArea.setLayout(new BoxLayout(centerArea,BoxLayout.Y_AXIS));
@@ -180,16 +211,11 @@ public class MainActivity extends JFrame {
         JLabel lbRecv=new JLabel("接收");
         centerArea.add(lbRecv);
 
-        JPanel panel5=new JPanel();
-        panel5.setLayout(new GridLayout(0,1));
-        centerArea.add(panel5);
-
-
         lstMsgModel=new DefaultListModel<>();
         lstMsg=new JList(lstMsgModel);
         lstMsg.setCellRenderer(new ListItemRender());
-        panel5.add(lstMsg);
-
+        JScrollPane panel5=new JScrollPane(lstMsg);
+        centerArea.add(panel5);
 
         JPanel buttomArea=new JPanel();
         buttomArea.setLayout(new BoxLayout(buttomArea,BoxLayout.Y_AXIS));
@@ -199,15 +225,19 @@ public class MainActivity extends JFrame {
         buttomArea.add(lbSend);
 
         JPanel panel7=new JPanel();
-        panel7.setLayout(new GridLayout(0,2));
+        panel7.setLayout(new GridLayout(0,3));
         buttomArea.add(panel7);
 
         btnSendFile=new JButton("发送文件");
-        btnSendFile.setBackground(Color.decode("#8888ff"));
+        btnSendFile.setBackground(Color.decode("#ede7f6"));
         panel7.add(btnSendFile);
 
+        ckbSendParentDir=new JCheckBox("发送所在文件夹");
+        ckbSendParentDir.setBackground(Color.decode("#ede7f6"));
+        panel7.add(ckbSendParentDir);
+
         btnCleanMsg=new JButton("清空");
-        btnCleanMsg.setBackground(Color.decode("#8888ff"));
+        btnCleanMsg.setBackground(Color.decode("#d1c4e9"));
         panel7.add(btnCleanMsg);
 
         JPanel panel8=new JPanel();
@@ -222,11 +252,11 @@ public class MainActivity extends JFrame {
         panel8.add(panel9);
 
         ckbAutoClean=new JCheckBox("清空");
-        ckbAutoClean.setBackground(Color.decode("#00aa44"));
+        ckbAutoClean.setBackground(Color.decode("#fff3e0"));
         panel9.add(ckbAutoClean);
 
         btnSendMessage=new JButton("发送");
-        btnSendMessage.setBackground(Color.decode("#00aa44"));
+        btnSendMessage.setBackground(Color.decode("#ffe0b2"));
         panel9.add(btnSendMessage);
 
     }
@@ -287,6 +317,41 @@ public class MainActivity extends JFrame {
                 Object item=spnLanAddress.getSelectedItem();
                 String ip=String.valueOf(item);
                 edtConnectIp.setText(ip);
+            }
+        });
+
+        btnApplyAddress.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(spnLocalAddressModel.getSize()==0){
+                    if(ipAddress.size()>0){
+                        localAdapter.notifyDataSetChanged();
+                    }
+                }
+                if(spnLanAddressModel.getSize()==0){
+                    String ip=(String)spnLocalAddress.getSelectedItem();
+                    lanIpAddress=ipAddress.get(ip);
+                    lanAdapter.notifyDataSetChanged();
+                }
+
+                String cip=(String)spnLanAddress.getSelectedItem();
+                edtConnectIp.setText(cip);
+            }
+        });
+
+        lstMsg.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                MsgItem msg=(MsgItem) lstMsg.getSelectedValue();
+                edtMessage.setText(msg.msg);
+            }
+        });
+
+        btnApplyFileSaveDir.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String text= edtFileSaveDir.getText();
+                NetworkBackgroundService.applySaveFilePath(svc,text);
             }
         });
     }
@@ -562,6 +627,44 @@ public class MainActivity extends JFrame {
         NetworkBackgroundService.sendFile(svc,file.getAbsolutePath());
     }
 
+    void sendFileProxy(List<File> files){
+        if(!ckbSendParentDir.isSelected()){
+            for(File item : files){
+                sendFile(item);
+            }
+            return;
+        }
+
+        Set<String> uniquePath=new HashSet<>();
+        for(File item : files){
+            if(!item.exists()){
+                continue;
+            }
+            if(item.isDirectory()){
+                uniquePath.add(item.getAbsolutePath());
+            }
+            if(item.isFile()){
+                File pfile=item.getParentFile();
+                if(pfile!=null){
+                    uniquePath.add(pfile.getAbsolutePath());
+                }
+            }
+        }
+
+        for(String path : uniquePath){
+            File dir=new File(path);
+            File[] list=dir.listFiles();
+            for(File pfile : list){
+                if(pfile.isDirectory()){
+                    continue;
+                }
+                if(pfile.isFile()){
+                    sendFile(pfile);
+                }
+            }
+        }
+    }
+
     public void onBtnRunServerClicked() {
         boolean ck=ckbRunServer.isSelected();
         if(ck){
@@ -625,9 +728,11 @@ public class MainActivity extends JFrame {
         int returnVal = chooser.showOpenDialog(getContentPane());        //是否打开文件选择框
         if (returnVal == JFileChooser.APPROVE_OPTION) {          //如果符合文件类型
             File[] files = chooser.getSelectedFiles();      //获取绝对路径
+            List<File> fileList=new ArrayList<>();
             for(File item : files){
-                sendFile(item);
+                fileList.add(item);
             }
+            sendFileProxy(fileList);
         }
     }
 

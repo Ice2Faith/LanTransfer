@@ -60,6 +60,9 @@ public class NetworkBackgroundService extends Service {
     public static final int CMD_SCAN_LAN = 0x401;
     public static final int CMD_SCAN_LAN_CACHE=0x402;
 
+    public static final int CMD_APPLY_SAVE_FILE_PATH=0x403;
+
+    public static String saveFilePath="Download";
     public static TcpServer server;
     public static TcpClient client;
     public static Map<String,Set<String>> ipAddress=new HashMap<>();
@@ -179,6 +182,14 @@ public class NetworkBackgroundService extends Service {
         return intent.getIntExtra(KEY_SERVICE_CMD,CMD_NULL);
     }
 
+    public static void applySaveFilePath(Context ctx,String path){
+        Intent intent=new Intent();
+        intent.setClass(ctx,NetworkBackgroundService.class);
+        intent.putExtra(KEY_SERVICE_CMD,CMD_APPLY_SAVE_FILE_PATH);
+        intent.putExtra(KEY_FILE,path);
+        ctx.startService(intent);
+    }
+
     private void dispatchServiceIntent(Intent intent){
         int cmd=getServiceCmd(intent);
         switch (cmd){
@@ -214,6 +225,9 @@ public class NetworkBackgroundService extends Service {
                 break;
             case CMD_SCAN_LAN_CACHE:
                 onScanLanCacheCmd(intent);
+                break;
+            case CMD_APPLY_SAVE_FILE_PATH:
+                onApplySaveFileCmd(intent);
                 break;
         }
     }
@@ -251,10 +265,10 @@ public class NetworkBackgroundService extends Service {
             public void run() {
                 if(server==null){
                     try{
-                        MainActivity.callbackSystemLog(getApplicationContext(),"server listening...");
+                        MainActivity.callbackSystemLog(getApplicationContext(),"server listening("+port+")...");
                         server=new TcpServer(port,new TransferClientAccepter());
                         serverPort=port;
-                        MainActivity.callbackSystemLog(getApplicationContext(),"server listen.");
+                        MainActivity.callbackSystemLog(getApplicationContext(),"server listen("+port+").");
                     }catch (Exception e){
                         MainActivity.callbackSystemError(getApplicationContext(),"start server error:"+e.getMessage()+" of "+e.getClass().getName());
                     }
@@ -295,11 +309,11 @@ public class NetworkBackgroundService extends Service {
             @Override
             public void run() {
                 try{
-                    MainActivity.callbackSystemLog(getApplicationContext(),"client connect...");
+                    MainActivity.callbackSystemLog(getApplicationContext(),"client connec("+connectIp+":"+connectPort+")t...");
                     client=new TcpClient(ip,port);
                     connectIp=ip;
                     connectPort=port;
-                    MainActivity.callbackSystemLog(getApplicationContext(),"client connected.");
+                    MainActivity.callbackSystemLog(getApplicationContext(),"client connected("+connectIp+":"+connectPort+").");
                     Socket sock=client.getSocket();
                     TransferClientProcessor target=new TransferClientProcessor(sock);
                     Thread thread=new Thread(target);
@@ -348,7 +362,7 @@ public class NetworkBackgroundService extends Service {
                     }else{
                         OutputStream os=client.getOutputStream();
                         NetTransfer.sendString(text,os);
-                        MainActivity.callbackSystemLog(getApplicationContext(),"sent text success.");
+                        MainActivity.callbackSystemLog(getApplicationContext(),"sent text success:"+text);
                     }
                 }catch (Exception e){
                     MainActivity.callbackSystemError(getApplicationContext(),"send msg error:"+e.getMessage()+" of "+e.getClass().getName());
@@ -358,6 +372,8 @@ public class NetworkBackgroundService extends Service {
             }
         });
     }
+    
+
     private void onSendFileCmd(Intent intent){
         final String file=intent.getStringExtra(KEY_FILE);
         pool.submit(new Runnable() {
@@ -368,10 +384,10 @@ public class NetworkBackgroundService extends Service {
                     if(client==null){
                         MainActivity.callbackSystemError(getApplicationContext(),"target server not connect!");
                     }else{
-                        MainActivity.callbackSystemLog(getApplicationContext(),"sending file ...");
+                        MainActivity.callbackSystemLog(getApplicationContext(),"sending file("+file+") ...");
                         OutputStream os=client.getOutputStream();
                         NetTransfer.sendFile(file,os);
-                        MainActivity.callbackSystemLog(getApplicationContext(),"sent file success.");
+                        MainActivity.callbackSystemLog(getApplicationContext(),"sent file success("+file+").");
                     }
                 }catch (Exception e){
                     MainActivity.callbackSystemError(getApplicationContext(),"send file error:"+e.getMessage()+" of "+e.getClass().getName());
@@ -380,6 +396,11 @@ public class NetworkBackgroundService extends Service {
                 }
             }
         });
+    }
+	
+	private synchronized void onApplySaveFileCmd(Intent intent){
+        String file=intent.getStringExtra(KEY_FILE);
+        saveFilePath=file;
     }
     private void onScanLanCmd(Intent intent){
         final int port=intent.getIntExtra(KEY_PORT,MainActivity.SERVER_PORT);
@@ -500,7 +521,7 @@ public class NetworkBackgroundService extends Service {
                     }else if(resp.isFile()){
                         String fileName=resp.getName();
                         MainActivity.callbackSystemLog(getApplicationContext(),"recv file:"+fileName+" len:"+resp.getContentLength());
-                        File dir=new File(Environment.getExternalStorageDirectory(),"Download");
+                        File dir=new File(Environment.getExternalStorageDirectory(),saveFilePath);
                         File file=new File(dir,fileName);
                         if(!file.getParentFile().exists()){
                             file.getParentFile().mkdirs();

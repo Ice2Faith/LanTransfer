@@ -63,7 +63,30 @@ public class MainActivity extends Activity {
     private EditText edtConnectIp;
     private EditText edtConnectPort;
 
+    private CheckBox ckbSendParentDir;
 
+    private EditText edtFileSaveDir;
+
+    public void onBtnApplyAddress(View view) {
+        if(localAdapter.getCount()==0){
+            if(ipAddress.size()>0){
+                localAdapter.notifyDataSetChanged();
+            }
+        }
+        if(lanAdapter.getCount()==0){
+            String ip=(String)spnLocalAddress.getSelectedItem();
+            lanIpAddress=ipAddress.get(ip);
+            lanAdapter.notifyDataSetChanged();
+        }
+
+        String cip=(String)spnConnectAddress.getSelectedItem();
+        edtConnectIp.setText(cip);
+    }
+
+    public void onBtnSaveFilePath(View view) {
+        String text= edtFileSaveDir.getText().toString();
+        NetworkBackgroundService.applySaveFilePath(this,text);
+    }
 
 
     class MsgItem{
@@ -343,6 +366,9 @@ public class MainActivity extends Activity {
         edtConnectIp=findViewById(R.id.edtConnectIp);
         edtConnectPort=findViewById(R.id.edtConnectPort);
 
+        ckbSendParentDir=findViewById(R.id.ckbSendParentDir);
+        edtFileSaveDir=findViewById(R.id.edtSaveFilePath);
+
         edtServerPort.setText(SERVER_PORT+"");
         edtConnectPort.setText(SERVER_PORT+"");
 
@@ -353,6 +379,7 @@ public class MainActivity extends Activity {
         NetworkBackgroundService.serverStatus(this);
         NetworkBackgroundService.clientStatus(this);
         NetworkBackgroundService.scanLanAddressCache(this);
+        edtFileSaveDir.setText(NetworkBackgroundService.saveFilePath);
 
         spnLocalAddress.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -486,12 +513,13 @@ public class MainActivity extends Activity {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            TextView tv=null;
+            EditText tv=null;
             if(convertView!=null){
-                tv=(TextView)convertView;
+                tv=(EditText)convertView;
             }else{
-                tv=new TextView(MainActivity.this);
+                tv=new EditText(MainActivity.this);
             }
+            tv.setSingleLine(false);
             Object item=getItem(position);
             MsgItem msg=(MsgItem)item;
             tv.setText(msg.msg);
@@ -557,6 +585,44 @@ public class MainActivity extends Activity {
         NetworkBackgroundService.sendFile(this,file.getAbsolutePath());
     }
 
+    void sendFileProxy(List<File> files){
+        if(!ckbSendParentDir.isChecked()){
+            for(File item : files){
+                sendFile(item);
+            }
+            return;
+        }
+
+        Set<String> uniquePath=new HashSet<>();
+        for(File item : files){
+            if(!item.exists()){
+                continue;
+            }
+            if(item.isDirectory()){
+                uniquePath.add(item.getAbsolutePath());
+            }
+            if(item.isFile()){
+                File pfile=item.getParentFile();
+                if(pfile!=null){
+                    uniquePath.add(pfile.getAbsolutePath());
+                }
+            }
+        }
+
+        for(String path : uniquePath){
+            File dir=new File(path);
+            File[] list=dir.listFiles();
+            for(File pfile : list){
+                if(pfile.isDirectory()){
+                    continue;
+                }
+                if(pfile.isFile()){
+                    sendFile(pfile);
+                }
+            }
+        }
+    }
+
     void dealTextMessage(Intent intent){
         String text = intent.getStringExtra(Intent.EXTRA_TEXT);
         sendText(text);
@@ -565,21 +631,27 @@ public class MainActivity extends Activity {
     void dealPicStream(Intent intent){
         Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
         String path=getFilePathFormUri(uri);
-        sendFile(new File(path));
+        List<File> fileList=new ArrayList<>();
+        fileList.add(new File(path));
+        sendFileProxy(fileList);
     }
 
     void dealDefaultAsFile(Intent intent){
         Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
         String path=getFilePathFormUri(uri);
-        sendFile(new File(path));
+        List<File> fileList=new ArrayList<>();
+        fileList.add(new File(path));
+        sendFileProxy(fileList);
     }
 
     void dealMultiplePicStream(Intent intent){
         ArrayList<Uri> list = intent.getParcelableArrayListExtra(intent.EXTRA_STREAM);
+        List<File> fileList=new ArrayList<>();
         for(Uri uri : list){
             String path=getFilePathFormUri(uri);
-            sendFile(new File(path));
+            fileList.add(new File(path));
         }
+        sendFileProxy(fileList);
     }
 
 
@@ -727,8 +799,10 @@ public class MainActivity extends Activity {
                 Uri uri = data.getData();
                 String path=getFilePathFormUri(uri);
                 if(path!=null){
+                    List<File> fileList=new ArrayList<>();
                     File file=new File(path);
-                    sendFile(file);
+                    fileList.add(file);
+                    sendFileProxy(fileList);
                     Toast.makeText(this,"choice file:"+file.getAbsolutePath(),Toast.LENGTH_LONG).show();
                 }else{
                     Toast.makeText(this,"no file choice.",Toast.LENGTH_LONG).show();
@@ -736,16 +810,18 @@ public class MainActivity extends Activity {
             }else if(data.getClipData()!=null){ // 多选
                 ClipData clipData = data.getClipData();
                 if (clipData != null) {
+                    List<File> fileList=new ArrayList<>();
                     for (int i = 0; i < clipData.getItemCount(); i++) {
                         ClipData.Item item = clipData.getItemAt(i);
                         Uri uri = item.getUri();
                         String path=getFilePathFormUri(uri);
                         if(path!=null){
                             File file=new File(path);
-                            sendFile(file);
+                            fileList.add(file);
                             Toast.makeText(this,"choice file:"+file.getAbsolutePath(),Toast.LENGTH_LONG).show();
                         }
                     }
+                    sendFileProxy(fileList);
                 }
             }else{
                 Toast.makeText(this,"no file choice.",Toast.LENGTH_LONG).show();

@@ -23,7 +23,7 @@
                 android:layout_weight="1"
                 android:ems="10"
                 android:hint="port"
-                android:background="#00ff00"
+                android:background="#fff8e1"
                 android:inputType="number" />
 
             <CheckBox
@@ -31,7 +31,7 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:background="#00ff00"
+                android:background="#ffecb3"
                 android:onClick="onBtnRunServerClicked"
                 android:text="启用主机" />
 
@@ -40,7 +40,7 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:background="#ff8800"
+                android:background="#ffcc80"
                 android:onClick="onBtnScanLanClicked"
                 android:text="扫描" />
 
@@ -63,6 +63,15 @@
                 android:layout_height="match_parent"
                 android:layout_weight="2" />
 
+            <Button
+                android:id="@+id/btnApplyAddress"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="2"
+                android:background="#fff9c4"
+                android:onClick="onBtnApplyAddress"
+                android:text="应用" />
+
         </LinearLayout>
 
         <LinearLayout
@@ -75,7 +84,7 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:background="#0088ff"
+                android:background="#b2ebf2"
                 android:onClick="onBtnConnectClicked"
                 android:text="连接" />
 
@@ -84,7 +93,7 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="2"
-                android:background="#0088ff"
+                android:background="#e0f7fa"
                 android:ems="10"
                 android:hint="ip"
                 android:inputType="text" />
@@ -94,11 +103,35 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:background="#0088ff"
+                android:background="#e0f7fa"
                 android:ems="10"
                 android:hint="port"
                 android:inputType="number" />
 
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/edtSaveFilePath"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="2"
+                android:inputType="text"
+                android:background="#e8f5e9"
+                android:text="Download" />
+
+            <Button
+                android:id="@+id/btnSaveFilePath"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="#c8e6c9"
+                android:onClick="onBtnSaveFilePath"
+                android:text="应用路径" />
         </LinearLayout>
 
         <LinearLayout
@@ -146,17 +179,25 @@
                         android:id="@+id/btnChoiceFile"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="4"
-                        android:background="#8888ff"
+                        android:layout_weight="2"
+                        android:background="#ede7f6"
                         android:onClick="onBtnSendFileClicked"
                         android:text="发送文件" />
+
+                    <CheckBox
+                        android:id="@+id/ckbSendParentDir"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="2"
+                        android:background="#ede7f6"
+                        android:text="发送所在文件夹" />
 
                     <Button
                         android:id="@+id/btnCleanLog"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:background="#8888ff"
+                        android:background="#d1c4e9"
                         android:onClick="onBtnCleanLogClicked"
                         android:text="清空" />
 
@@ -188,7 +229,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0dp"
                             android:layout_weight="1"
-                            android:background="#00aa44"
+                            android:background="#fff3e0"
                             android:checked="true"
                             android:text="清空" />
 
@@ -197,7 +238,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="0dp"
                             android:layout_weight="2"
-                            android:background="#00aa44"
+                            android:background="#ffe0b2"
                             android:onClick="onBtnSendMessageClick"
                             android:text="发送" />
                     </LinearLayout>
